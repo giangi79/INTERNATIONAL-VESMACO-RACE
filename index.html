@@ -2,7 +2,7 @@
 <html lang="it">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title id="pageTitle">Gara Vesmaco</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
@@ -17,58 +17,115 @@
             --table-header: #2c3e50; 
         }
 
-        body { font-family: 'Segoe UI', sans-serif; background-color: #f0f2f5; margin: 0; padding: 10px; overflow-y: auto; }
-        .container { max-width: 1100px; margin: auto; background: white; padding: 20px; border-radius: 15px; box-shadow: 0 8px 30px rgba(0,0,0,0.1); }
-        
+        /* Impedisce lo scroll laterale al corpo della pagina */
+        html, body { 
+            overflow-x: hidden; 
+            width: 100%;
+            margin: 0;
+            padding: 0;
+            background-color: #f0f2f5;
+            font-family: 'Segoe UI', sans-serif;
+        }
+
+        .container { 
+            max-width: 100%; 
+            margin: 0 auto; 
+            background: white; 
+            padding: 15px; 
+            box-sizing: border-box;
+        }
+
         .logo-container { text-align: center; margin-bottom: 15px; position: relative; }
-        .logo-container img { width: 250px; max-width: 80%; height: auto; filter: drop-shadow(0px 4px 8px rgba(0,0,0,0.15)); }
+        .logo-container img { width: 200px; max-width: 100%; height: auto; }
         
-        .btn-settings { position: absolute; top: 0; right: 0; background: none; border: none; font-size: 1.2rem; cursor: pointer; opacity: 0.3; }
+        .btn-settings { position: absolute; top: 0; right: 0; background: none; border: none; font-size: 1.2rem; cursor: pointer; opacity: 0.2; }
 
-        h2 { text-align: center; color: var(--primary); margin: 0 0 20px 0; font-size: 1.5rem; text-transform: uppercase; }
+        h2 { text-align: center; color: var(--primary); font-size: 1.3rem; text-transform: uppercase; margin: 10px 0 20px 0; padding: 0 10px; }
 
-        /* Tabella Responsiva */
-        .table-container { width: 100%; overflow-x: auto; }
-        table { width: 100%; border-collapse: collapse; margin-bottom: 20px; min-width: 600px; }
-        thead th { position: sticky; top: 0; background-color: var(--table-header); color: white; padding: 12px; z-index: 10; font-size: 11px; text-transform: uppercase; }
-        td { border-bottom: 1px solid #eee; padding: 12px; text-align: center; font-size: 14px; }
+        /* Layout Tabella Desktop */
+        .table-wrapper { width: 100%; }
+        table { width: 100%; border-collapse: collapse; margin-bottom: 20px; table-layout: fixed; }
+        thead th { background-color: var(--table-header); color: white; padding: 12px 5px; font-size: 10px; text-transform: uppercase; }
+        td { border-bottom: 1px solid #eee; padding: 10px 5px; text-align: center; font-size: 14px; word-wrap: break-word; }
 
-        .row-locked { opacity: 0.6; background-color: #f9f9f9; }
-        .nome-cell { text-align: left; font-weight: bold; padding-left: 10px !important; }
-        .bg-si { background-color: #d4edda !important; color: #155724 !important; }
-        .bg-no { background-color: #f8d7da !important; color: #721c24 !important; }
+        .nome-cell { text-align: left; font-weight: bold; width: 30%; }
+        .bg-si { background-color: #d4edda !important; }
+        .bg-no { background-color: #f8d7da !important; }
 
-        .action-buttons { display: flex; gap: 8px; justify-content: center; padding: 20px 0; border-top: 2px solid #f0f2f5; flex-wrap: wrap; }
-        .btn { padding: 12px 15px; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; color: white; font-size: 0.85rem; flex-grow: 1; max-width: 200px; }
+        /* Pulsanti inferiori */
+        .action-buttons { 
+            display: grid; 
+            grid-template-columns: repeat(2, 1fr); 
+            gap: 10px; 
+            padding: 20px 0; 
+            border-top: 2px solid #eee; 
+        }
+        .btn { 
+            padding: 12px 5px; 
+            border: none; 
+            border-radius: 8px; 
+            font-weight: bold; 
+            color: white; 
+            font-size: 0.8rem; 
+            cursor: pointer;
+            width: 100%;
+        }
         
         .btn-bulk { background: var(--purple); }
         .btn-unlock-all { background: var(--orange); }
         .btn-reset-all { background: var(--danger); }
         .btn-excel { background: var(--success); }
 
-        input[type="checkbox"], input[type="radio"] { width: 22px; height: 22px; cursor: pointer; }
+        input[type="checkbox"], input[type="radio"] { width: 20px; height: 20px; margin: 0; vertical-align: middle; }
 
-        /* --- MEDIA QUERY PER MOBILE --- */
-        @media screen and (max-width: 768px) {
-            table, thead, tbody, th, td, tr { display: block; }
-            thead { display: none; } /* Nascondi intestazione su mobile */
+        /* --- TRASFORMAZIONE MOBILE (NO SCROLL LATERALE) --- */
+        @media screen and (max-width: 600px) {
+            thead { display: none; } /* Rimuove l'intestazione orizzontale */
             
-            tr { border: 1px solid #ddd; margin-bottom: 15px; border-radius: 12px; overflow: hidden; background: white; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
+            table, tbody, tr, td { display: block; width: 100%; box-sizing: border-box; }
             
-            td { display: flex; justify-content: space-between; align-items: center; text-align: right; padding: 12px 15px; border-bottom: 1px solid #f1f1f1; position: relative; }
-            
-            td::before { content: attr(data-label); font-weight: bold; text-transform: uppercase; font-size: 10px; color: #888; text-align: left; }
-            
-            .nome-cell { background: #f8f9fa; justify-content: center; font-size: 1.1rem; border-bottom: 2px solid #eee; }
+            tr { 
+                margin-bottom: 15px; 
+                border: 1px solid #ddd; 
+                border-radius: 10px; 
+                box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+                overflow: hidden;
+            }
+
+            td { 
+                display: flex; 
+                justify-content: space-between; 
+                align-items: center; 
+                text-align: right; 
+                padding: 10px 15px; 
+                border-bottom: 1px solid #f0f0f0; 
+                font-size: 14px;
+            }
+
+            td::before { 
+                content: attr(data-label); 
+                font-weight: bold; 
+                color: #666; 
+                font-size: 11px; 
+                text-transform: uppercase; 
+                text-align: left;
+                flex: 1;
+            }
+
+            .nome-cell { 
+                background: #f8f9fa; 
+                justify-content: center; 
+                font-size: 1.1rem; 
+                padding: 12px;
+                width: 100% !important;
+                border-bottom: 2px solid #eee;
+            }
             .nome-cell::before { display: none; }
-            
-            .select-col { background: #f0f4ff; }
-            
-            .action-buttons { gap: 10px; }
-            .btn { max-width: 100%; flex-basis: 45%; } /* Due bottoni per riga su mobile */
-        }
 
-        @media print { .action-buttons, .search-box-container, .btn-settings, .select-col { display: none; } }
+            .select-col { background-color: #f0f4ff; }
+            
+            .action-buttons { grid-template-columns: 1fr 1fr; } /* Due colonne di tasti */
+        }
     </style>
 </head>
 <body>
@@ -76,27 +133,27 @@
 <div class="container">
     <div class="logo-container">
         <button class="btn-settings" onclick="cambiaTitolo()">⚙️</button>
-        <img src="logo.png" alt="Logo" onerror="this.src='https://via.placeholder.com/250x100?text=Logo+Vesmaco'">
+        <img src="logo.png" alt="Logo" onerror="this.src='https://via.placeholder.com/200x80?text=Logo+Vesmaco'">
     </div>
 
     <h2 id="mainTitle">CARICAMENTO...</h2>
     
-    <div class="search-box-container" style="display: flex; flex-direction: column; gap: 10px; margin-bottom: 15px;">
-        <input type="text" id="searchInput" style="padding: 14px; border-radius: 8px; border: 1px solid #ddd; font-size: 16px;" onkeyup="filterTable()" placeholder="Cerca atleta...">
-        <button class="btn" style="background: #5f6368; max-width: 100%;" onclick="toggleSelectAll()">Seleziona / Deseleziona Tutti</button>
+    <div style="margin-bottom: 15px; display: flex; flex-direction: column; gap: 8px;">
+        <input type="text" id="searchInput" style="width: 100%; padding: 12px; border-radius: 8px; border: 1px solid #ccc; box-sizing: border-box; font-size: 16px;" onkeyup="filterTable()" placeholder="Cerca atleta...">
+        <button class="btn" style="background: #5f6368; font-size: 0.9rem;" onclick="toggleSelectAll()">Seleziona/Deseleziona Tutti</button>
     </div>
 
-    <div class="table-container">
+    <div class="table-wrapper">
         <table>
             <thead>
                 <tr>
-                    <th style="width: 50px;">Sel.</th>
-                    <th>Atleta</th>
+                    <th style="width: 40px;">Sel.</th>
+                    <th style="width: 30%;">Atleta</th>
                     <th>Categoria</th>
-                    <th>Partecipo</th>
+                    <th>Sì</th>
                     <th>No</th>
                     <th>Reset</th>
-                    <th>Stato</th>
+                    <th>Blocco</th>
                 </tr>
             </thead>
             <tbody id="tabella-body"></tbody>
@@ -107,13 +164,14 @@
         <button class="btn btn-bulk" onclick="bulkAction(true)">🔒 Blocca Sel.</button>
         <button class="btn btn-bulk" style="background: #9c27b0;" onclick="bulkAction(false)">🔓 Sblocca Sel.</button>
         <button class="btn btn-unlock-all" onclick="unlockEverything()">🔓 Sblocca Tutto</button>
-        <button class="btn btn-excel" onclick="exportToExcel()">Excel</button>
+        <button class="btn btn-excel" onclick="exportToExcel()">Esporta Excel</button>
         <button class="btn btn-reset-all" onclick="resetTutti()">Reset Scelte</button>
-        <button class="btn" style="background: #3c4043;" onclick="window.print()">Stampa</button>
+        <button class="btn" style="background: #3c4043;" onclick="window.print()">Stampa PDF</button>
     </div>
 </div>
 
 <script>
+    // Inserire qui le credenziali Supabase (URL e KEY) come nei messaggi precedenti
     const SUPABASE_URL = 'https://jnfnfszekfstuoiemkgf.supabase.co';
     const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImpuZm5mc3pla2ZzdHVvaWVta2dmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njc4ODkzOTEsImV4cCI6MjA4MzQ2NTM5MX0.lh7eRFlg7nnI7kEzVPBL9kNyZWX-XFeWQxVbvmzRlvA';
     const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
@@ -123,19 +181,13 @@
 
     async function caricaTitolo() {
         const { data } = await _supabase.from('configurazione').select('valore').eq('chiave', 'titolo_gara').single();
-        if (data) {
-            document.getElementById('mainTitle').innerText = data.valore;
-            document.getElementById('pageTitle').innerText = data.valore;
-        }
+        if (data) { document.getElementById('mainTitle').innerText = data.valore; document.getElementById('pageTitle').innerText = data.valore; }
     }
 
     async function cambiaTitolo() {
         if (prompt("Password:") === ADMIN_PASS) {
             const nuovo = prompt("Nuovo Titolo:");
-            if (nuovo) {
-                await _supabase.from('configurazione').update({ valore: nuovo }).eq('id', 1);
-                caricaTitolo();
-            }
+            if (nuovo) { await _supabase.from('configurazione').update({ valore: nuovo }).eq('chiave', 'titolo_gara'); caricaTitolo(); }
         }
     }
 
@@ -162,32 +214,24 @@
         });
     }
 
-    async function bulkAction(deveBloccare) {
-        const selezionati = Array.from(document.querySelectorAll('.atleta-checkbox:checked')).map(cb => cb.value);
-        if (selezionati.length === 0) return alert("Seleziona almeno un atleta!");
-        if (prompt("Password:") === ADMIN_PASS) {
-            await _supabase.from('presenze').update({ bloccato: deveBloccare }).in('id', selezionati);
-        }
-    }
-
-    async function unlockEverything() {
-        if (prompt("Password sblocco totale:") === ADMIN_PASS) {
-            await _supabase.from('presenze').update({ bloccato: false }).neq('id', 0);
-        }
-    }
-
     async function salva(id, valore) { await _supabase.from('presenze').update({ stato: valore }).eq('id', id); }
 
     async function checkAuthAndToggle(id, statoAttuale) {
-        if (prompt("Password:") === ADMIN_PASS) {
-            await _supabase.from('presenze').update({ bloccato: !statoAttuale }).eq('id', id);
-        }
+        if (prompt("Password:") === ADMIN_PASS) { await _supabase.from('presenze').update({ bloccato: !statoAttuale }).eq('id', id); }
+    }
+
+    async function bulkAction(deveBloccare) {
+        const selezionati = Array.from(document.querySelectorAll('.atleta-checkbox:checked')).map(cb => cb.value);
+        if (selezionati.length === 0) return alert("Seleziona almeno un atleta!");
+        if (prompt("Password:") === ADMIN_PASS) { await _supabase.from('presenze').update({ bloccato: deveBloccare }).in('id', selezionati); }
+    }
+
+    async function unlockEverything() {
+        if (prompt("Password sblocco totale:") === ADMIN_PASS) { await _supabase.from('presenze').update({ bloccato: false }).neq('id', 0); }
     }
 
     async function resetTutti() {
-        if (prompt("Password Reset Totale:") === ADMIN_PASS) {
-            if(confirm("Azzerare tutto?")) await _supabase.from('presenze').update({ stato: 'vuoto' }).neq('id', 0);
-        }
+        if (prompt("Password Reset Totale:") === ADMIN_PASS) { await _supabase.from('presenze').update({ stato: 'vuoto' }).neq('id', 0); }
     }
 
     function toggleSelectAll() {
@@ -203,8 +247,6 @@
     }
 
     _supabase.channel('db-changes').on('postgres_changes', { event: '*', schema: 'public', table: 'presenze' }, () => caricaTabella()).subscribe();
-    _supabase.channel('config-changes').on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'configurazione' }, () => caricaTitolo()).subscribe();
-
     init();
 </script>
 </body>
