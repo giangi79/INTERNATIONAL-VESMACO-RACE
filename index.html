@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title id="pageTitle">Gara Vesmaco</title>
+    <title id="pageTitle">Gestione Presenze Gara</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     
@@ -75,10 +75,10 @@
         .row-locked { opacity: 0.6; background-color: #f9f9f9; }
         .row-locked input[type="radio"] { cursor: not-allowed; }
 
-        .admin-only { display: none; }
+        .admin-only { display: none !important; }
 
         .action-buttons { 
-            display: grid; 
+            display: none; 
             grid-template-columns: repeat(2, 1fr); 
             gap: 10px; 
             padding: 20px 0; 
@@ -141,7 +141,7 @@
             .nome-cell::before { display: none; }
         }
 
-        @media print { .action-buttons, .top-controls, .btn-settings, .admin-only { display: none; } }
+        @media print { .action-buttons, .top-controls, .btn-settings, .admin-only { display: none !important; } }
     </style>
 </head>
 <body>
@@ -149,7 +149,7 @@
 <div class="container">
     <div class="logo-container">
         <button class="btn-settings" onclick="toggleAdmin()">⚙️</button>
-        <img src="logo.png" alt="Logo" onerror="this.src='https://via.placeholder.com/200x80?text=Logo+Vesmaco'">
+        <img src="logo.png" alt="Logo" onerror="this.src='https://via.placeholder.com/200x80?text=Logo+Gara'">
     </div>
 
     <h2 id="mainTitle">CARICAMENTO...</h2>
@@ -171,27 +171,27 @@
     
     <div class="top-controls">
         <input type="text" id="searchInput" class="search-box" onkeyup="filterTable()" placeholder="Cerca atleta o categoria...">
-        <button class="btn btn-gray admin-only" onclick="toggleSelectAll()">Seleziona / Deseleziona Tutti</button>
+        <button id="btnSelectAll" class="btn btn-gray admin-only" onclick="toggleSelectAll()">Seleziona / Deseleziona Tutti</button>
     </div>
 
     <div class="table-wrapper">
         <table id="targetTable">
             <thead>
                 <tr>
-                    <th style="width: 50px;" class="admin-only">Sel.</th>
+                    <th id="thSelect" style="width: 50px;" class="admin-only">Sel.</th>
                     <th style="width: 30%;">Atleta</th>
                     <th>Categoria</th>
                     <th>Partecipo</th>
                     <th>Non Partecipo</th>
                     <th>Reset</th>
-                    <th class="admin-only">Blocco</th>
+                    <th id="thLock" class="admin-only">Blocco</th>
                 </tr>
             </thead>
             <tbody id="tabella-body"></tbody>
         </table>
     </div>
 
-    <div class="action-buttons admin-only" id="adminButtons">
+    <div class="action-buttons" id="adminButtons">
         <button class="btn btn-bulk" onclick="bulkAction(true)">🔒 Blocca Sel.</button>
         <button class="btn btn-bulk" style="background: #9c27b0;" onclick="bulkAction(false)">🔓 Sblocca Sel.</button>
         <button class="btn btn-unlock-all" onclick="unlockEverything()">🔓 Sblocca Tutto</button>
@@ -218,28 +218,28 @@
             const pass = prompt("Password Amministratore:");
             if (pass === ADMIN_PASS) {
                 isAdmin = true;
-                aggiornaVisibilitaAdmin();
+                aggiornaInterfaccia();
             } else if (pass !== null) {
                 alert("Password Errata");
             }
         } else {
             isAdmin = false;
-            aggiornaVisibilitaAdmin();
+            aggiornaInterfaccia();
         }
     }
 
-    function aggiornaVisibilitaAdmin() {
-        const elements = document.querySelectorAll('.admin-only');
-        elements.forEach(el => {
-            if (el.tagName === 'TH' || el.tagName === 'TD') {
-                el.style.display = isAdmin ? 'table-cell' : 'none';
-            } else if (el.id === 'adminButtons') {
-                el.style.display = isAdmin ? 'grid' : 'none';
-            } else {
-                el.style.display = isAdmin ? 'block' : 'none';
-            }
+    function aggiornaInterfaccia() {
+        document.getElementById('adminButtons').style.display = isAdmin ? 'grid' : 'none';
+        const admins = document.querySelectorAll('.admin-only');
+        admins.forEach(el => {
+            if (isAdmin) el.classList.remove('admin-only');
         });
-        caricaTabella(); 
+
+        if (!isAdmin) {
+            location.reload(); 
+        } else {
+            caricaTabella();
+        }
     }
 
     async function caricaTitolo() {
@@ -247,6 +247,8 @@
         if (data) { 
             document.getElementById('mainTitle').innerText = data.valore; 
             document.title = data.valore;
+        } else {
+            document.getElementById('mainTitle').innerText = "GESTIONE PRESENZE";
         }
     }
 
@@ -268,7 +270,7 @@
             const cl = p.stato === 'si' ? 'bg-si' : (p.stato === 'no' ? 'bg-no' : '');
             
             tr.innerHTML = `
-                <td data-label="Seleziona" class="admin-only" style="display: ${isAdmin ? 'table-cell' : 'none'}">
+                <td data-label="Seleziona" style="display: ${isAdmin ? 'table-cell' : 'none'}">
                     <input type="checkbox" class="atleta-checkbox" value="${p.id}">
                 </td>
                 <td class="nome-cell ${cl}">${p.nome}</td>
@@ -282,7 +284,7 @@
                 <td data-label="Reset">
                     <button onclick="confermaResetSingolo('${p.id}', '${p.nome.replace(/'/g, "\\'")}')" style="background:none; border:none; font-size:1.2rem; cursor:pointer;" ${p.bloccato ? 'disabled' : ''}>🔄</button>
                 </td>
-                <td data-label="Blocco" class="admin-only" style="display: ${isAdmin ? 'table-cell' : 'none'}">
+                <td data-label="Blocco" style="display: ${isAdmin ? 'table-cell' : 'none'}">
                     <button onclick="checkAuthAndToggle('${p.id}', ${p.bloccato})" style="background:none; border:none; font-size:1.2rem; cursor:pointer;">${p.bloccato ? '🔒' : '🔓'}</button>
                 </td>
             `;
@@ -347,7 +349,7 @@
     function exportToExcel() {
         const table = document.getElementById("targetTable");
         const wb = XLSX.utils.table_to_book(table, {sheet: "Presenze"});
-        XLSX.writeFile(wb, "Report_Vesmaco.xlsx");
+        XLSX.writeFile(wb, "Report_Gara.xlsx");
     }
 
     _supabase.channel('any').on('postgres_changes', { event: '*', schema: 'public', table: 'presenze' }, () => caricaTabella()).subscribe();
