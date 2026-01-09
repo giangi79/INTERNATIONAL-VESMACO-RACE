@@ -117,8 +117,8 @@
     </div>
 
     <div class="stats-grid">
-        <div class="stat-card stat-presenti"><span>✅ PARTECIPO</span><div id="count-si">0</div></div>
-        <div class="stat-card stat-assenti"><span>❌ NON PARTECIPO</span><div id="count-no">0</div></div>
+        <div class="stat-card stat-presenti"><span>✅ PARTECIPA</span><div id="count-si">0</div></div>
+        <div class="stat-card stat-assenti"><span>❌ NON PARTECIPA</span><div id="count-no">0</div></div>
     </div>
 
     <div id="confirmedList" style="display:none;">
@@ -132,11 +132,11 @@
         <table>
             <thead>
                 <tr>
-                    <th class="col-admin">Sel.</th>
+                    <th class="col-admin"><input type="checkbox" onclick="selectAll(this)"></th>
                     <th>Atleta</th>
                     <th>Categoria</th>
-                    <th>Partecipo</th>
-                    <th>Non Partecipo</th>
+                    <th>Partecipa</th>
+                    <th>Non Partecipa</th>
                     <th>Reset</th>
                     <th class="col-admin">Azioni</th>
                 </tr>
@@ -211,8 +211,8 @@
                 <td class="col-admin" data-label="Sel." style="display:${displayAdmin}"><input type="checkbox" class="bulk-cb" value="${p.id}"></td>
                 <td class="nome-cell">${p.nome}${p.bloccato ? ' 🔒' : ''}</td>
                 <td data-label="Categoria">${p.categoria}</td>
-                <td data-label="Partecipo"><input type="radio" name="r_${p.id}" ${p.stato==='si'?'checked':''} ${disabled} onclick="salva('${p.id}','si')"></td>
-                <td data-label="Non Partecipo"><input type="radio" name="r_${p.id}" ${p.stato==='no'?'checked':''} ${disabled} onclick="salva('${p.id}','no')"></td>
+                <td data-label="Partecipa"><input type="radio" name="r_${p.id}" ${p.stato==='si'?'checked':''} ${disabled} onclick="salva('${p.id}','si')"></td>
+                <td data-label="Non Partecipa"><input type="radio" name="r_${p.id}" ${p.stato==='no'?'checked':''} ${disabled} onclick="salva('${p.id}','no')"></td>
                 <td data-label="Reset"><button class="action-btn" onclick="salva('${p.id}','vuoto')" ${disabled}>🔄</button></td>
                 <td class="col-admin" data-label="Azioni" style="display:${displayAdmin}">
                     <button class="action-btn" onclick="toggleLock('${p.id}', ${p.bloccato})">${p.bloccato?'🔒':'🔓'}</button>
@@ -272,6 +272,10 @@
             caricaTabella();
             showToast("Admin Sbloccato 🔓");
         }
+    }
+
+    function selectAll(source) {
+        document.querySelectorAll('.bulk-cb').forEach(cb => cb.checked = source.checked);
     }
 
     async function bulkAction(lock) {
