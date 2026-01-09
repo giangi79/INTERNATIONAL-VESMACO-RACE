@@ -1,1 +1,61 @@
+name: Invio Report Gara 2 Automatico
 
+on:
+  schedule:
+    # Esegue il controllo ogni 30 minuti
+    - cron: '*/30 * * * *'
+  workflow_dispatch: # Permette di avviarlo anche manualmente per test
+
+jobs:
+  check-deadline:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Esegui Script di Controllo
+        run: |
+          # Definiamo le variabili (Sostituisci se necessario)
+          SUPABASE_URL="https://jnfnfszekfstuoiemkgf.supabase.co"
+          SUPABASE_KEY="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..." # Usa la tua chiave
+          TELEGRAM_TOKEN="8441085660:AAEui_yfGnT_quKPHVx_wsslcuJtm3KbTOI"
+          TELEGRAM_CHAT_ID="691756250"
+          
+          # 1. Recupera Configurazione da Supabase
+          CONFIG=$(curl -s "$SUPABASE_URL/rest/v1/config_gara2?select=*" -H "apikey: $SUPABASE_KEY" -H "Authorization: Bearer $SUPABASE_KEY")
+          
+          SCADENZA=$(echo $CONFIG | jq -r '.[] | select(.chiave=="scadenza_adesioni") | .valore')
+          REPORT_SENT=$(echo $CONFIG | jq -r '.[] | select(.chiave=="report_sent") | .valore')
+          TITOLO=$(echo $CONFIG | jq -r '.[] | select(.chiave=="titolo_gara") | .valore')
+
+          if [ "$SCADENZA" == "null" ] || [ "$SCADENZA" == "" ]; then
+            echo "Nessuna scadenza impostata."
+            exit 0
+          fi
+
+          # 2. Controllo Tempo (in secondi)
+          NOW=$(date +%s)
+          DEADLINE_SEC=$(date -d "$SCADENZA" +%s)
+
+          if [ "$NOW" -ge "$DEADLINE_SEC" ] && [ "$REPORT_SENT" != "true" ]; then
+            echo "Scadenza superata! Invio report..."
+
+            # 3. Recupera Atleti che partecipano
+            ATLETI=$(curl -s "$SUPABASE_URL/rest/v1/gara2?stato=eq.si&select=nome,categoria" -H "apikey: $SUPABASE_KEY" -H "Authorization: Bearer $SUPABASE_KEY")
+            
+            # Formatta il messaggio (molto semplificato per Bash)
+            MSG="🏁 *ISCRIZIONI CHIUSE* %0A🏆 *Evento:* $TITOLO %0A%0A"
+            LISTA=$(echo $ATLETI | jq -r '. | group_by(.categoria) | .[] | "*\(.[0].categoria):*\n\(map("- \(.nome)") | join("\n"))\n"' | sed 's/ /%20/g' | sed 's/\n/%0A/g')
+            
+            FINAL_MSG="${MSG}${LISTA}"
+
+            # 4. Invia a Telegram
+            curl -s "https://api.telegram.org/bot$TELEGRAM_TOKEN/sendMessage?chat_id=$TELEGRAM_CHAT_ID&text=$FINAL_MSG&parse_mode=Markdown"
+
+            # 5. Segna come inviato su Supabase per non ripetere
+            curl -X POST "$SUPABASE_URL/rest/v1/config_gara2" \
+              -H "apikey: $SUPABASE_KEY" \
+              -H "Authorization: Bearer $SUPABASE_KEY" \
+              -H "Content-Type: application/json" \
+              -H "Prefer: resolution=merge-duplicates" \
+              -d "{\"chiave\": \"report_sent\", \"valore\": \"true\"}"
+          else
+            echo "Non ancora scaduto o report già inviato."
+          fi
