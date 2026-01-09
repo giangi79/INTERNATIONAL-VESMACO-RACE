@@ -12,11 +12,12 @@
             --primary: #1a73e8; --success: #28a745; --danger: #dc3545; 
             --purple: #673ab7; --orange: #ff9800; --table-header: #2c3e50; 
             --bg-body: #f0f2f5; --bg-card: #ffffff; --text-main: #333333;
+            --timer-bg: #e8f0fe;
         }
 
         [data-theme="dark"] {
             --bg-body: #121212; --bg-card: #1e1e1e; --text-main: #e0e0e0;
-            --table-header: #000000; --primary: #8ab4f8;
+            --table-header: #000000; --primary: #8ab4f8; --timer-bg: #1a273a;
         }
 
         body { margin: 0; padding: 0; background-color: var(--bg-body); color: var(--text-main); font-family: 'Segoe UI', sans-serif; transition: 0.3s; }
@@ -27,26 +28,29 @@
         .top-btns { position: absolute; top: 0; right: 0; display: flex; gap: 8px; }
         .icon-btn { background: none; border: none; font-size: 1.2rem; cursor: pointer; padding: 5px; }
         .logout-btn { display: none; color: var(--danger); border: 1px solid var(--danger); border-radius: 5px; padding: 5px 10px; cursor: pointer; font-size: 0.7rem; font-weight: bold; background: white; }
+        
         h2 { text-align: center; color: var(--primary); margin: 10px 0; font-size: 1.3rem; text-transform: uppercase; }
 
-        #addAtletaBox { 
-            background: rgba(26, 115, 232, 0.08); border: 2px solid var(--primary); 
-            border-radius: 12px; padding: 20px; margin-bottom: 20px; display: none; 
-            flex-direction: column; gap: 15px; 
-        }
+        .countdown-container { text-align: center; margin: 10px 0; padding: 15px; border-radius: 12px; background: var(--timer-bg); border: 2px solid var(--primary); transition: 0.5s; min-height: 60px; display: flex; align-items: center; justify-content: center; }
+        .timer { font-family: 'Courier New', monospace; font-size: 1.3rem; font-weight: bold; color: var(--primary); }
+        .timer-warning { background: #fff3e0; border-color: #ff9800; }
+        .timer-urgent { background: #ffebee; border-color: #dc3545; animation: pulse 2s infinite; }
+
+        @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.8; } 100% { opacity: 1; } }
+
+        #addAtletaBox { background: rgba(26, 115, 232, 0.08); border: 2px solid var(--primary); border-radius: 12px; padding: 20px; margin-bottom: 20px; display: none; flex-direction: column; gap: 15px; }
         .admin-row { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
         .admin-row input { flex: 1; padding: 12px; border: 1px solid #ccc; border-radius: 6px; min-width: 180px; font-size: 14px; }
         .admin-row button { padding: 12px 20px; border: none; border-radius: 6px; cursor: pointer; font-weight: bold; color: white; }
+        .btn-confirm-timer { background: var(--success) !important; font-size: 0.85rem; }
+        .btn-reset-timer { background: var(--danger) !important; font-size: 0.85rem; }
 
-        .countdown-container { text-align: center; margin: 10px 0; padding: 12px; border-radius: 10px; background: #e8f0fe; border: 1px solid #c2d7fa; display: none; }
-        .timer { font-family: monospace; font-size: 1.1rem; font-weight: bold; color: var(--primary); }
         .stats-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 15px; }
         .stat-card { padding: 12px; border-radius: 8px; text-align: center; color: white; font-weight: bold; }
         .stat-presenti { background: var(--success); }
         .stat-assenti { background: var(--danger); }
 
         #confirmedList { background: #f8f9fa; border-radius: 10px; padding: 15px; margin-bottom: 20px; border-left: 5px solid var(--success); }
-        [data-theme="dark"] #confirmedList { background: #252525; }
         .cat-title { font-weight: bold; color: var(--success); border-bottom: 1px solid #ddd; margin: 10px 0 5px 0; font-size: 0.9rem; }
         .atleta-tag { display: inline-block; background: white; padding: 4px 10px; margin: 3px; border-radius: 20px; font-size: 0.85rem; border: 1px solid #ddd; }
         [data-theme="dark"] .atleta-tag { background: #333; color: white; border-color: #444; }
@@ -60,7 +64,7 @@
         
         .bg-si { background-color: rgba(40, 167, 69, 0.08) !important; }
         .bg-no { background-color: rgba(220, 53, 69, 0.08) !important; }
-        input[type="radio"] { width: 22px; height: 22px; cursor: pointer; }
+        input[type="radio"] { width: 26px; height: 26px; cursor: pointer; }
 
         .col-admin { display: none; }
         .action-btn { background: none; border: none; cursor: pointer; font-size: 1.2rem; padding: 5px; }
@@ -76,7 +80,6 @@
             td::before { content: attr(data-label); font-weight: bold; font-size: 0.70rem; color: #777; }
             .nome-cell { background: rgba(0,0,0,0.03); justify-content: center; font-size: 1.0rem; }
             .nome-cell::before { display: none; }
-            .col-admin[style*="display: table-cell"] { display: flex !important; }
         }
     </style>
 </head>
@@ -97,7 +100,7 @@
     <h2 id="mainTitle">Caricamento...</h2>
     
     <div id="countdownBox" class="countdown-container">
-        <div id="timerDisplay" class="timer">--:--:--:--</div>
+        <div id="timerDisplay" class="timer">Sincronizzazione...</div>
     </div>
 
     <div id="addAtletaBox">
@@ -111,8 +114,10 @@
             <button onclick="aggiungiAtleta()" style="background:var(--primary);">+ Aggiungi Atleta</button>
         </div>
         <div class="admin-row">
-            <div style="font-size: 14px; font-weight: bold;">Chiusura automatica:</div>
-            <input type="datetime-local" id="deadlineInput" onchange="salvaScadenza(this.value)">
+            <div style="font-size: 14px; font-weight: bold;">Scadenza Iscrizioni:</div>
+            <input type="datetime-local" id="deadlineInput">
+            <button onclick="confermaScadenzaDB()" class="btn-confirm-timer">CONFERMA SCADENZA</button>
+            <button onclick="resetScadenzaDB()" class="btn-reset-timer">RESET SCADENZA</button>
         </div>
     </div>
 
@@ -154,7 +159,6 @@
 </div>
 
 <script>
-    // --- CONFIGURAZIONE ---
     const SUPABASE_URL = 'https://jnfnfszekfstuoiemkgf.supabase.co';
     const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImpuZm5mc3pla2ZzdHVvaWVta2dmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njc4ODkzOTEsImV4cCI6MjA4MzQ2NTM5MX0.lh7eRFlg7nnI7kEzVPBL9kNyZWX-XFeWQxVbvmzRlvA';
     const TELEGRAM_TOKEN = '8441085660:AAEui_yfGnT_quKPHVx_wsslcuJtm3KbTOI';
@@ -171,13 +175,89 @@
     }
 
     async function caricaConfig() {
-        const { data } = await _supabase.from('configurazione').select('*');
-        if(!data) return;
-        const titolo = data.find(c => c.chiave === 'titolo_gara')?.valore || "Gara";
-        const scadenza = data.find(c => c.chiave === 'scadenza_adesioni')?.valore;
-        document.getElementById('mainTitle').innerText = titolo;
-        document.getElementById('editTitleInput').value = titolo;
-        if (scadenza) { document.getElementById('deadlineInput').value = scadenza; startCountdown(scadenza); }
+        try {
+            const { data, error } = await _supabase.from('configurazione').select('*');
+            if(error) throw error;
+
+            const titoloObj = data.find(c => c.chiave === 'titolo_gara');
+            const scadenzaObj = data.find(c => c.chiave === 'scadenza_adesioni');
+
+            document.getElementById('mainTitle').innerText = titoloObj?.valore || "Gara Juvenilia";
+            document.getElementById('editTitleInput').value = titoloObj?.valore || "Gara Juvenilia";
+            
+            if (scadenzaObj && scadenzaObj.valore && scadenzaObj.valore !== "") {
+                const scadString = scadenzaObj.valore;
+                document.getElementById('deadlineInput').value = scadString;
+                
+                const diff = new Date(scadString).getTime() - new Date().getTime();
+                if (diff <= 0) {
+                    isExpired = true;
+                    mostraStatoTimer("ISCRIZIONI CHIUSE", "var(--danger)");
+                } else {
+                    isExpired = false;
+                    startCountdown(scadString);
+                }
+            } else {
+                isExpired = false;
+                document.getElementById('deadlineInput').value = "";
+                mostraStatoTimer("TERMINE DA DEFINIRE", "var(--primary)");
+            }
+        } catch (e) {
+            mostraStatoTimer("ERRORE CONNESSIONE", "var(--danger)");
+        }
+    }
+
+    function mostraStatoTimer(testo, colore) {
+        clearInterval(timerInterval);
+        const display = document.getElementById('timerDisplay');
+        display.innerText = testo;
+        display.style.color = colore;
+        document.getElementById('countdownBox').className = "countdown-container";
+    }
+
+    function startCountdown(endTime) {
+        clearInterval(timerInterval);
+        const box = document.getElementById('countdownBox');
+        const display = document.getElementById('timerDisplay');
+        display.style.color = "var(--primary)";
+
+        timerInterval = setInterval(() => {
+            const now = new Date().getTime();
+            const distance = new Date(endTime).getTime() - now;
+
+            if (distance <= 0) {
+                clearInterval(timerInterval);
+                isExpired = true;
+                display.innerText = "ISCRIZIONI CHIUSE";
+                display.style.color = "var(--danger)";
+                box.className = "countdown-container";
+                caricaTabella(); 
+                return;
+            }
+
+            const d = Math.floor(distance / 86400000);
+            const h = Math.floor((distance % 86400000) / 3600000);
+            const m = Math.floor((distance % 3600000) / 60000);
+            const s = Math.floor((distance % 60000) / 1000);
+            display.innerText = `SCADENZA: ${d}g ${h}h ${m}m ${s}s`;
+
+            if (distance < 10800000) box.className = "countdown-container timer-urgent";
+            else if (distance < 86400000) box.className = "countdown-container timer-warning";
+            else box.className = "countdown-container";
+        }, 1000);
+    }
+
+    async function confermaScadenzaDB() {
+        const v = document.getElementById('deadlineInput').value;
+        if(!v) return alert("Inserisci una data!");
+        const { error } = await _supabase.from('configurazione').upsert({ chiave: 'scadenza_adesioni', valore: v }, { onConflict: 'chiave' });
+        if(!error) { showToast("Timer Aggiornato!"); await caricaConfig(); caricaTabella(); }
+    }
+
+    async function resetScadenzaDB() {
+        if(!confirm("Vuoi rimuovere il timer e riaprire le iscrizioni?")) return;
+        const { error } = await _supabase.from('configurazione').upsert({ chiave: 'scadenza_adesioni', valore: "" }, { onConflict: 'chiave' });
+        if(!error) { showToast("Timer Rimosso!"); await caricaConfig(); caricaTabella(); }
     }
 
     async function caricaTabella() {
@@ -204,6 +284,7 @@
             const tr = document.createElement('tr');
             if(p.stato === 'si') tr.className = 'bg-si';
             if(p.stato === 'no') tr.className = 'bg-no';
+            
             const disabled = isExpired && !isAdmin ? 'disabled' : '';
             const displayAdmin = isAdmin ? 'table-cell' : 'none';
 
@@ -232,37 +313,32 @@
                 listContent.appendChild(div);
             });
         } else { document.getElementById('confirmedList').style.display = 'none'; }
+        
         document.getElementById('count-si').innerText = cSi;
         document.getElementById('count-no').innerText = cNo;
     }
 
     async function salva(id, val) { 
         const atleta = currentData.find(a => a.id == id);
-        const nomeAtleta = atleta ? atleta.nome : "Sconosciuto";
-        const titoloGara = document.getElementById('mainTitle').innerText;
-
         const { error } = await _supabase.from('presenze').update({ stato: val }).eq('id', id);
         if(!error) {
-            showToast("Aggiornato");
-            if (val !== 'vuoto') inviaTelegram(nomeAtleta, val, titoloGara);
+            showToast("Registrato");
+            if (val !== 'vuoto') inviaTelegram(atleta.nome, val, document.getElementById('mainTitle').innerText);
         }
     }
 
     async function inviaTelegram(nome, scelta, gara) {
         const emoji = scelta === 'si' ? '✅ PARTECIPA' : '❌ NON PARTECIPA';
         const testo = `🏆 *Gara:* ${gara}\n👤 *Atleta:* ${nome}\n📝 *Scelta:* ${emoji}`;
-        try {
-            await fetch(`https://api.telegram.org/bot${TELEGRAM_TOKEN}/sendMessage`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ chat_id: TELEGRAM_CHAT_ID, text: testo, parse_mode: 'Markdown' })
-            });
-        } catch (e) { console.error("Errore Telegram", e); }
+        fetch(`https://api.telegram.org/bot${TELEGRAM_TOKEN}/sendMessage`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ chat_id: TELEGRAM_CHAT_ID, text: testo, parse_mode: 'Markdown' })
+        });
     }
 
     function toggleAdmin() {
-        const p = prompt("Password:");
-        if (p === ADMIN_PASS) {
+        if (prompt("Password:") === ADMIN_PASS) {
             isAdmin = true;
             document.getElementById('adminIcon').style.display = 'none';
             document.getElementById('logoutBtn').style.display = 'block';
@@ -270,72 +346,46 @@
             document.getElementById('adminButtons').style.display = 'grid';
             document.querySelectorAll('.col-admin').forEach(el => el.style.display = 'table-cell');
             caricaTabella();
-            showToast("Admin Sbloccato 🔓");
+            showToast("Pannello Admin Attivo");
         }
     }
 
-    function selectAll(source) {
-        document.querySelectorAll('.bulk-cb').forEach(cb => cb.checked = source.checked);
-    }
-
-    async function bulkAction(lock) {
-        const selectedIds = Array.from(document.querySelectorAll('.bulk-cb:checked')).map(cb => cb.value);
-        if (selectedIds.length === 0) return alert("Seleziona almeno un atleta");
-        const { error } = await _supabase.from('presenze').update({ bloccato: lock }).in('id', selectedIds);
-        if(!error) { showToast(`${selectedIds.length} atleti aggiornati`); caricaTabella(); }
+    async function salvaTitolo() { 
+        const t = document.getElementById('editTitleInput').value;
+        await _supabase.from('configurazione').upsert({ chiave: 'titolo_gara', valore: t }, { onConflict: 'chiave' });
+        document.getElementById('mainTitle').innerText = t;
+        showToast("Titolo aggiornato");
     }
 
     async function exportToExcel() {
-        const dataToExport = currentData.map(p => ({
-            Atleta: p.nome,
-            Categoria: p.categoria,
-            Stato: p.stato === 'si' ? 'PARTECIPA' : (p.stato === 'no' ? 'NON PARTECIPA' : 'NON DICHIARATO')
-        }));
-        const worksheet = XLSX.utils.json_to_sheet(dataToExport);
-        const workbook = XLSX.utils.book_new();
-        XLSX.utils.book_append_sheet(workbook, worksheet, "Presenze");
-        XLSX.writeFile(workbook, `Presenze_Juvenilia.xlsx`);
+        const dataToExport = currentData.map(p => ({ Atleta: p.nome, Categoria: p.categoria, Stato: p.stato === 'si' ? 'PARTECIPA' : (p.stato === 'no' ? 'NON PARTECIPA' : 'NON DICHIARATO') }));
+        const ws = XLSX.utils.json_to_sheet(dataToExport);
+        const wb = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(wb, ws, "Presenze");
+        XLSX.writeFile(wb, `Presenze_Juvenilia.xlsx`);
     }
 
-    async function toggleLock(id, cur) { await _supabase.from('presenze').update({ bloccato: !cur }).eq('id', id); }
-    async function eliminaAtleta(id, n) { if(confirm(`Eliminare ${n}?`)) await _supabase.from('presenze').delete().eq('id', id); }
-    async function resetTutti() { if(confirm("Resettare tutte le scelte?")) await _supabase.from('presenze').update({ stato: 'vuoto' }).neq('id', 0); }
-    async function unlockEverything() { await _supabase.from('presenze').update({ bloccato: false }).neq('id', 0); }
-    
+    function selectAll(s) { document.querySelectorAll('.bulk-cb').forEach(cb => cb.checked = s.checked); }
+    async function bulkAction(l) { 
+        const ids = Array.from(document.querySelectorAll('.bulk-cb:checked')).map(cb => cb.value);
+        if (ids.length) await _supabase.from('presenze').update({ bloccato: l }).in('id', ids);
+        caricaTabella();
+    }
+    async function toggleLock(id, cur) { await _supabase.from('presenze').update({ bloccato: !cur }).eq('id', id); caricaTabella(); }
+    async function eliminaAtleta(id, n) { if(confirm(`Eliminare ${n}?`)) { await _supabase.from('presenze').delete().eq('id', id); caricaTabella(); } }
+    async function resetTutti() { if(confirm("Resettare tutto?")) { await _supabase.from('presenze').update({ stato: 'vuoto' }).neq('id', 0); caricaTabella(); } }
+    async function unlockEverything() { await _supabase.from('presenze').update({ bloccato: false }).neq('id', 0); caricaTabella(); }
     async function aggiungiAtleta() {
         const n = document.getElementById('newNome').value, c = document.getElementById('newCat').value;
-        if(n && c) {
-            await _supabase.from('presenze').insert([{ nome: n, categoria: c, stato: 'vuoto' }]);
-            document.getElementById('newNome').value = "";
-            showToast("Aggiunto!");
-        }
+        if(n && c) { await _supabase.from('presenze').insert([{ nome: n, categoria: c, stato: 'vuoto' }]); document.getElementById('newNome').value = ""; caricaTabella(); }
     }
-
-    async function salvaTitolo() { await _supabase.from('configurazione').update({ valore: document.getElementById('editTitleInput').value }).eq('chiave', 'titolo_gara'); }
-    async function salvaScadenza(v) { await _supabase.from('configurazione').update({ valore: v }).eq('chiave', 'scadenza_adesioni'); }
-
-    function startCountdown(endTime) {
-        clearInterval(timerInterval);
-        document.getElementById('countdownBox').style.display = 'block';
-        timerInterval = setInterval(() => {
-            const distance = new Date(endTime).getTime() - new Date().getTime();
-            if (distance < 0) { isExpired = true; document.getElementById('timerDisplay').innerText = "ISCRIZIONI CHIUSE"; return; }
-            const d = Math.floor(distance / 86400000), h = Math.floor((distance % 86400000) / 3600000), m = Math.floor((distance % 3600000) / 60000), s = Math.floor((distance % 60000) / 1000);
-            document.getElementById('timerDisplay').innerText = `SCADENZA: ${d}g ${h}h ${m}m ${s}s`;
-        }, 1000);
-    }
-
     function filterTable() {
         const s = document.getElementById("searchInput").value.toUpperCase();
         document.querySelectorAll("#tabella-body tr").forEach(tr => { tr.style.display = tr.innerText.toUpperCase().includes(s) ? "" : "none"; });
     }
-
     function showToast(m) { const t = document.getElementById("toast"); t.innerText = m; t.className = "show"; setTimeout(() => t.className = "", 3000); }
     function logoutAdmin() { location.reload(); }
     function toggleDarkMode() { const t = document.body.getAttribute('data-theme') === 'dark' ? 'light' : 'dark'; document.body.setAttribute('data-theme', t); localStorage.setItem('theme', t); }
-
-    _supabase.channel('db').on('postgres_changes', { event: '*', schema: 'public', table: 'presenze' }, () => caricaTabella()).subscribe();
-    _supabase.channel('cfg').on('postgres_changes', { event: '*', schema: 'public', table: 'configurazione' }, () => caricaConfig()).subscribe();
 
     init();
 </script>
